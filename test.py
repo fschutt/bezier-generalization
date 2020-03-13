@@ -72,7 +72,7 @@ def generate_curve_points_cubic(lim_range, a, b, c, d):
 def open_window_and_show_results(points, curve):
 
     # Generate the curve
-    curve_begin = min(points, key=lambda p: p.y)
+    curve_begin = min(points, key=lambda p: p.x)
     curve_end = max(points, key=lambda p: p.x)
 
     curve_begin = floor(curve_begin.x)
