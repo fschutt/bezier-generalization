@@ -2,6 +2,7 @@ import matplotlib
 from math import floor, ceil
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 from mpl_toolkits.axes_grid.axislines import SubplotZero
 
@@ -78,8 +79,8 @@ def generate_curve_points_cubic(lim_range, a, b, c, d):
 # Returns the point at t of a curve [p0, p1, p2, p3]
 def cubic_bezier_curve(p0, p1, p2, p3, t):
     # B(t) = (1-t)**3 p0 + 3(1 - t)**2 t P1 + 3(1-t)t**2 P2 + t**3 P3
-    x = (1-t)*(1-t)*(1-t)*p0.x + 3*(1-t)*(1-t)*t*p1.x + 3*(1-t)*t*t*p2.x + t*t*t*p3.x;
-    y = (1-t)*(1-t)*(1-t)*p0.y + 3*(1-t)*(1-t)*t*p1.y + 3*(1-t)*t*t*p2.y + t*t*t*p3.y;
+    x = pow((1-t), 3)*p0.x + 3*pow((1-t),2)*t*p1.x + 3*(1-t)*t*t*p2.x + t*t*t*p3.x;
+    y = pow((1-t), 3)*p0.y + 3*pow((1-t),2)*t*p1.y + 3*(1-t)*t*t*p2.y + t*t*t*p3.y;
     return Point(x, y)
 
 # Returns the points making up the bezier curve
@@ -123,9 +124,10 @@ def open_window_and_show_results(points, curve, bezier_points):
     else:
         raise "Length of curve has to be 3 or 4"
 
-    plot_points(plt, curve_points, 'blue')
+    # plot_points(plt, curve_points, 'blue')
 
-    plot_points(plt, points, 'ro')
+    # plot_points(plt, points, 'ro')
+    plot_points(plt, points, 'red')
 
     plot_points(plt, bezier_points, 'go')
 
@@ -323,14 +325,76 @@ def calc_error_quadratic(points, curve):
     pass
 
 def calc_bezier_curve(points):
+
+    # fx(t):=(1-t)3p1x+3t(1-t)2p2x+3t2(1-t)p3x+t3p4x
+    # fy(t):=(1-t)3p1y+3t(1-t)2p2y+3t2(1-t)p3y+t3p4y
+    # searched p2x, p2y, p3x p3y
+    #
+    # LSQ = ∑i ||B(ti)-Pi||² = 
+    # ∑i ((Bx(ti)-Pxi)² + ((By(ti)-Pyi)²)
+    #
+    # ∂/∂Fx(LSQ) = 0
+    # ∂/∂Fy(LSQ) = 0
+    # ∂/∂Ex(LSQ) = 0
+    # ∂/∂Ey(LSQ) = 0
+
+    if len(points) < 4:
+        raise "Too few points!"
+
+    # First, calculate the t parameter using chord-length approximation
+    t_values = [0]
+    t_sum = 0
+    last_point = None
+
+    for p in points:
+        if last_point is None:
+            last_point = p
+        else:
+            dst = distance(last_point, p)
+            t_values.append(t_sum + dst)
+            t_sum += dst
+            last_point = p
+
+    print("t_sum: ", t_sum)
+
+
+    # Values of t from 0 to 1
+    t_values_real = []
+    
+    for t in t_values:
+        t_values_real.append(t / t_sum)
+
+    print("t_values_real: ", t_values_real)
+
+    p0 = points[0]
+    p3 = points[len(points) - 1]
+
+    for i in range(0, len(points)):
+        pi = points[i]
+        t_of_point = t_values_real[i]
+        one_minus_t = (1-t_of_point)
+        solved_1 = pi.x - pow((1-t_of_point), 3)*p0.x - pow(t_of_point, 3)*p3.x
+        a = 3 * pow((1-t_of_point), 2) * t_of_point
+        b = 3 * (1-t_of_point) * pow(t_of_point, 2)
+        print(str(a) + "P1 + " + str(b) + "P2 = " + str(solved_1))
+
+        # 3*pow((1-t_of_point),2)*t_of_point*p1.x + \
+        # 3*(1-t_of_point)*pow(t_of_point, 2)*p2.x + \
+            
+
     bezier_points = [
         points[0],
-        Point(-1, 1),
-        Point(0, 3),
+        Point(-1, 0),
+        Point(0, 4.5),
         points[len(points)- 1],
     ]
 
     return bezier_points
+
+def distance(a, b):
+    var_a = b.x - a.x
+    var_b = b.y - a.y
+    return math.sqrt(pow(var_a, 2) + pow(var_b, 2))
 
 def main():
 
@@ -345,6 +409,23 @@ def main():
     ]
 
     bezier_points = calc_bezier_curve(points)
+
+    # ((1-t)^3*a+3*(1-t)^2*t*b+3*(1-t)*t^2*c+t^3*d - e)^2
+    # ((1-t)^3*a  +  3*(1-t)^2*t*b  +  3*(1-t)*t^2*c  +  t^3*d - e)^2
+
+    # -12*b*d*t5
+    # -18*b*c*t6-18*c2*t5-2*a*d*t6-2*a*e-2*d*e*t3-20*a2*t3-24*a*c*t3-24*a*c*t5-30*a*b*t2-36*b2*t3-36*b2*t5-54*b*c*t4-6*a*b*t6-6*a*d*t4-6*a*e*t2-6*a2*t-6*a2*t5-6*b*e*t-6*b*e*t3-6*c*d*t6-6*c*e*t2-60*a*b*t4 
+    # + 12*b*e*t2
+    # +15*a2*t2
+    # +15*a2*t4
+    # +18*b*c*t3
+    # +2*a*d*t3
+    # +2*a*e*t3
+    # +30*a*b*t5
+    # +36*a*c*t454*b*c*t554*b2*t46*a*b*t6*a*c*t26*a*c*t66*a*d*t56*a*e*t6*b*d*t46*b*d*t66*c*d*t56*c*e*t360*a*b*t39*b2*t29*b2*t69*c2*t49*c2*t6a2*t6d2*t6a2e2
+    
+
+    # (((1-t)^3*a  +  3*(1-t)^2*t*b  +  3*(1-t)*t^2*c  +  t^3*d) - e)^2 + (((1-t)^3*a  +  3*(1-t)^2*t*b  +  3*(1-t)*t^2*c  +  t^3*d) - f)^2
 
     # f(x) = 1x² + 0x + 0
     curve_cubic = try_fit_curve_cubic(points)
