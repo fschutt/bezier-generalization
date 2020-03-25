@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import matplotlib
 from math import floor, ceil
 import numpy as np
@@ -5,6 +8,7 @@ import matplotlib.pyplot as plt
 import math
 
 from mpl_toolkits.axes_grid.axislines import SubplotZero
+
 
 class Point:
     def __init__(self, x, y):
@@ -355,20 +359,16 @@ def calc_bezier_curve(points):
             t_sum += dst
             last_point = p
 
-    print("t_sum: ", t_sum)
-
-
     # Values of t from 0 to 1
     t_values_real = []
     
     for t in t_values:
         t_values_real.append(t / t_sum)
 
-    print("t_values_real: ", t_values_real)
-
     p0 = points[0]
     p3 = points[len(points) - 1]
 
+    # Now, calculate the first and third 
     for i in range(0, len(points)):
         pi = points[i]
         t_of_point = t_values_real[i]
@@ -376,7 +376,7 @@ def calc_bezier_curve(points):
         solved_1 = pi.x - pow((1-t_of_point), 3)*p0.x - pow(t_of_point, 3)*p3.x
         a = 3 * pow((1-t_of_point), 2) * t_of_point
         b = 3 * (1-t_of_point) * pow(t_of_point, 2)
-        print(str(a) + "P1 + " + str(b) + "P2 = " + str(solved_1))
+        print(str(round(t_of_point, 3)) + " (" + str(round(pi.x, 3)) + "):\t" + str(round(a, 3)) + " * P1\t+\t" + str(round(b, 3)) + " * P2\t=\t" + str(round(solved_1, 3)))
 
         # 3*pow((1-t_of_point),2)*t_of_point*p1.x + \
         # 3*(1-t_of_point)*pow(t_of_point, 2)*p2.x + \
@@ -397,6 +397,8 @@ def distance(a, b):
     return math.sqrt(pow(var_a, 2) + pow(var_b, 2))
 
 def main():
+
+    warnings.filterwarnings("ignore")
 
     points = [
         Point(-2.5,   2.64),
@@ -430,7 +432,6 @@ def main():
     # f(x) = 1x² + 0x + 0
     curve_cubic = try_fit_curve_cubic(points)
     
-    print(curve_cubic)
     # f(x) = 1x³ + 0x² + 0x + 0
     # curve2 = [1, 0, 0, 0]
 
