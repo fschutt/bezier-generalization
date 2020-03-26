@@ -330,18 +330,6 @@ def calc_error_quadratic(points, curve):
 
 def calc_bezier_curve(points):
 
-    # fx(t):=(1-t)3p1x+3t(1-t)2p2x+3t2(1-t)p3x+t3p4x
-    # fy(t):=(1-t)3p1y+3t(1-t)2p2y+3t2(1-t)p3y+t3p4y
-    # searched p2x, p2y, p3x p3y
-    #
-    # LSQ = ∑i ||B(ti)-Pi||² = 
-    # ∑i ((Bx(ti)-Pxi)² + ((By(ti)-Pyi)²)
-    #
-    # ∂/∂Fx(LSQ) = 0
-    # ∂/∂Fy(LSQ) = 0
-    # ∂/∂Ex(LSQ) = 0
-    # ∂/∂Ey(LSQ) = 0
-
     if len(points) < 4:
         raise "Too few points!"
 
@@ -368,24 +356,73 @@ def calc_bezier_curve(points):
     p0 = points[0]
     p3 = points[len(points) - 1]
 
-    # Now, calculate the first and third 
+    last_a = 0.0
+    last_b = 0.0
+    last_x = p0.x
+    p1_x_estimate = 0.0
+    p2_x_estimate = 0.0
+
+    # Now, calculate the second and third point
     for i in range(0, len(points)):
         pi = points[i]
         t_of_point = t_values_real[i]
         one_minus_t = (1-t_of_point)
-        solved_1 = pi.x - pow((1-t_of_point), 3)*p0.x - pow(t_of_point, 3)*p3.x
+        solved_1_x = pi.x - pow((1-t_of_point), 3)*p0.x - pow(t_of_point, 3)*p3.x
         a = 3 * pow((1-t_of_point), 2) * t_of_point
         b = 3 * (1-t_of_point) * pow(t_of_point, 2)
-        print(str(round(t_of_point, 3)) + " (" + str(round(pi.x, 3)) + "):\t" + str(round(a, 3)) + " * P1\t+\t" + str(round(b, 3)) + " * P2\t=\t" + str(round(solved_1, 3)))
+        
+        delta_a = a - last_a
+        delta_b = b - last_b
+        delta_x = pi.x - last_x
+        print(str(t_of_point) + "," + str(pi.x) + "," + str(a) + "," + str(b) + \
+            "," + str(solved_1_x) + "," + str(delta_x) + "," + str(delta_a) + "," + str(delta_b))
+        last_a = a
+        last_b = b
+        last_x = pi.x
+
+    print("")
+
+    last_a = 0.0
+    last_b = 0.0
+    last_y = p0.y
+    p1_y_estimate = 0.0
+    p2_y_estimate = 0.0
+
+    print("t,y,p1_coeff,p2_coeff,y_minus_p0_and_pn,delta_y,delta_p1_coeff,delte_p2_coeff")
+
+    for i in range(0, len(points)):
+        pi = points[i]
+        t_of_point = t_values_real[i]
+        one_minus_t = (1-t_of_point)
+        solved_1_y = pi.y - pow((1-t_of_point), 3)*p0.y - pow(t_of_point, 3)*p3.y
+        a = 3 * pow((1-t_of_point), 2) * t_of_point
+        b = 3 * (1-t_of_point) * pow(t_of_point, 2)
+
+        delta_a = a - last_a
+        delta_b = b - last_b
+        delta_y = pi.y - last_y
+        print(str(t_of_point) + "," + str(pi.y) + "," + str(a) + "," + str(b) + \
+            "," + str(solved_1_y) + "," + str(delta_y) + "," + str(delta_a) + "," + str(delta_b))
+        last_a = a
+        last_b = b
+        last_y = pi.y
 
         # 3*pow((1-t_of_point),2)*t_of_point*p1.x + \
         # 3*(1-t_of_point)*pow(t_of_point, 2)*p2.x + \
-            
+
+    print("")
+    print("necessary P1: (9.0, 0.0)")
+    print("necessary P2: (10.0, 4.5)")
+    print("")
+    print("P1: (" + str(round(p1_x_estimate, 3)) + ", " + str(round(p1_y_estimate, 3)) + ")")
+    print("P2: (" + str(round(p2_x_estimate, 3)) + ", " + str(round(p2_y_estimate, 3)) + ")")
 
     bezier_points = [
         points[0],
-        Point(-1, 0),
-        Point(0, 4.5),
+        # Point(9, 0),
+        # Point(10, 4.5),
+        Point(8.31467076263679, 0.405744869220129),
+        Point(10.7571755746409, 4.05796685005973),
         points[len(points)- 1],
     ]
 
@@ -401,13 +438,13 @@ def main():
     warnings.filterwarnings("ignore")
 
     points = [
-        Point(-2.5,   2.64),
-        Point(-2.0,   2.0),
-        Point(-1.29,  1.8),
-        Point(-0.52,  2.2),
-        Point( 0.23,  2.53),
-        Point( 0.67,  2.11),
-        Point( 1.02,  1.34),
+        Point( 7.5,   2.64),
+        Point( 8.0,   2.0),
+        Point( 8.71,  1.8),
+        Point( 9.48,  2.2),
+        Point( 10.23,  2.53),
+        Point( 10.67,  2.11),
+        Point( 11.02,  1.34),
     ]
 
     bezier_points = calc_bezier_curve(points)
