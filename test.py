@@ -366,7 +366,6 @@ def calc_bezier_curve(points):
     for i in range(0, len(points)):
         pi = points[i]
         t_of_point = t_values_real[i]
-        one_minus_t = (1-t_of_point)
         solved_1_x = pi.x - pow((1-t_of_point), 3)*p0.x - pow(t_of_point, 3)*p3.x
         a = 3 * pow((1-t_of_point), 2) * t_of_point
         b = 3 * (1-t_of_point) * pow(t_of_point, 2)

@@ -16,9 +16,7 @@ const REGRESSION_INPUT_ZEROED: RegressionInput = RegressionInput { y: 0.0, a: 0.
 // Output of the 2-variable regression algorithm
 struct RegressionOutput {
     x1: f64,
-    error_x1: f64,
     x2: f64,
-    error_x2: f64,
 }
 
 pub fn estimate_bezier_curve(points: &[Point]) -> Result<[Point;4], Error> {
@@ -96,7 +94,7 @@ pub fn estimate_bezier_curve(points: &[Point]) -> Result<[Point;4], Error> {
     ])
 }
 
-fn quadratic_regression(equations: &[RegressionInput]) -> RegressionOutput {
+pub fn quadratic_regression(equations: &[RegressionInput]) -> RegressionOutput {
     
     let num_equations = equations.len() as f64;
 
@@ -124,9 +122,6 @@ fn quadratic_regression(equations: &[RegressionInput]) -> RegressionOutput {
     let mut devsq_y = 0.0;
     let mut devsq_a = 0.0;
     let mut devsq_b = 0.0;
-    let mut devsq_y_minus_a = 0.0;
-    let mut devsq_y_minus_b = 0.0;
-    let mut devsq_a_minus_b = 0.0;
 
     for eq in equations {
         let y_diff = eq.y - y_mean;
@@ -135,13 +130,9 @@ fn quadratic_regression(equations: &[RegressionInput]) -> RegressionOutput {
         devsq_y += y_diff * y_diff;
         devsq_a += a_diff * a_diff;
         devsq_b += b_diff * b_diff;
-        devsq_y_minus_a += y_diff * a_diff;
-        devsq_y_minus_b += y_diff * b_diff;
-        devsq_a_minus_b += b_diff * a_diff;
     }
 
     // Calculate the a and b values plus their error rya, ryb and rab
-
     let ya = ay_sum - a_sum * y_sum / num_equations;
     let yb = by_sum - b_sum * y_sum / num_equations;
 
@@ -149,18 +140,11 @@ fn quadratic_regression(equations: &[RegressionInput]) -> RegressionOutput {
     let ab = ab_sum - a_sum * b_sum / num_equations;
     let bb = devsq_b;
     
-    let r_ya = devsq_y_minus_a / (devsq_y * devsq_a).sqrt(); // sample correlation coefficient of y -> a
-    let r_yb = devsq_y_minus_b / (devsq_y * devsq_b).sqrt(); // sample correlation coefficient of y -> a
-    let r_ab = devsq_a_minus_b / (devsq_a * devsq_b).sqrt(); // sample correlation coefficient of b -> a
-
     let div = aa*bb-ab*ab;
-    let r_div = 1.0 - r_ab*r_ab;
 
     RegressionOutput {
         x1: (bb*ya-ab*yb) / div,
-        error_x1: (r_ya-r_yb*r_ab) / r_div,
         x2: (aa*yb-ab*ya) / div,
-        error_x2: (r_yb - r_ya * r_ab) / r_div,
     }
 }
 
